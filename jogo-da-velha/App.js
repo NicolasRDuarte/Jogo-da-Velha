@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, RefreshControl, ScrollView } from 'react-native';
 import Figura from './components/figura';
 import { useState } from 'react';
 
@@ -10,16 +10,56 @@ export default function App() {
     isCross: true,
     winMessage: "",
   });
+  const [refresh, setRefresh] = useState(false);
+
+  const resetGame = () => {
+    setRefresh(true);
+    array.fill(0);
+    setValues({isCross: true, winMessage: ""});
+    setRefresh(false);
+  }
 
   const changeMove = (number) => {
-    if (array[number] === 0) {
+    if (array[number] === 0 && !values.winMessage) {
       array[number] = values.isCross;
       setValues({ isCross: !values.isCross });
+      winGame(number);
     }
   }
 
+  const winGame = (number) => {
+    if (
+        // Linhas iguais
+           (array[0] === array[number] && array[1] === array[number] && array[2] === array[number])
+        || (array[3] === array[number] && array[4] === array[number] && array[5] === array[number])
+        || (array[6] === array[number] && array[7] === array[number] && array[8] === array[number])
+
+        // Colunas iguais
+        || (array[0] === array[number] && array[3] === array[number] && array[6] === array[number])
+        || (array[1] === array[number] && array[4] === array[number] && array[7] === array[number])
+        || (array[2] === array[number] && array[5] === array[number] && array[8] === array[number])
+        
+        // Diagonais iguais
+        || (array[0] === array[number] && array[4] === array[number] && array[8] === array[number])
+        || (array[2] === array[number] && array[4] === array[number] && array[6] === array[number])
+        
+    ) {
+      setValues({ ...values, winMessage: array[number] ? "X Venceu" : "O Venceu" });
+    } else 
+      if (array.every((element) => element !== 0)) {
+          setValues({ ...values, winMessage: "Empate" });
+      }
+}
+
   return (
-    <View style={styles.container}>
+    <ScrollView 
+      contentContainerStyle={styles.container}
+      refreshControl={
+        <RefreshControl 
+          refreshing={refresh} 
+          onRefresh={() => resetGame()} />
+      }
+    >
       <Text style={styles.text}>Jogo da Velha</Text>
       <View style={styles.row}>
         <View style={styles.box}>
@@ -50,8 +90,11 @@ export default function App() {
           <Figura vetor={array} posicao={8} clicado={() => changeMove(8)}/>
         </View>
       </View>
+      <Text style={styles.winMessage}>
+        {values.winMessage}
+      </Text>
       <StatusBar style="auto" />
-    </View>
+    </ScrollView>
   );
 }
 
@@ -77,5 +120,11 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     padding: 10,
     borderColor: '#000',
+  },
+  winMessage: {
+    fontSize: 30,
+    color: '#000',
+    fontWeight: 'bold',
+    marginBottom: 20,
   }
 });
